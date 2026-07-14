@@ -1,0 +1,116 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    padding: 2rem;
+}
+
+#code-applied {
+    display: none;
+}
+
+#cart {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+#cart-items {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.cart-item-image {
+    max-width: 200px;
+}
+
+.cart-item-name {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.cart-item-description {
+    font-size: 1rem;
+    color: #666;
+    padding-top: 0.5rem;
+}
+
+#creator-code-section {
+    background-color: #3b82c4;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    width: 100%;
+}
+
+#creator-code-section label {
+    display: block;
+    font-family: sans-serif;
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 0.5rem;
+}
+
+#creator-code-input-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+#creator-code {
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    border: none;
+    font-size: 1rem;
+}
+
+#creator-code.valid {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2322c55e' width='20' height='20'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.5rem;
+}
+
+#creator-code-section button {
+    border-radius: 8px;
+    font-size: 0.875rem;
+    color: white;
+    font-weight: bold;
+    background-color: #c8a200;
+    padding: 0.5rem 1.25rem;
+    border: none;
+    cursor: pointer;
+}
+
+#creator-shoutout {
+    background-color: #2563a8;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: bold;
+    margin-top: 0.75rem;
+}
+
+#code-error {
+    width: 100%;
+    margin-top: 0.5rem;
+    padding: 0.5rem 1rem;
+    background-color: #fee2e2;
+    color: #b91c1c;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+#fsc-embedded-checkout-container {
+    margin-top: 1rem;
+    width: 100%;
+    text-align: justify;
+}

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FSBuilds Nexus Integration</title>
+    
+    <script
+      id="fsc-api"
+      src="https://sbl.onfastspring.com/sbl/1.0.7/fastspring-builder.min.js"
+      type="text/javascript"
+      data-storefront="ericateststore.test.onfastspring.com/embedded-readytoroll"
+      data-continuous="true"
+      data-data-callback="dataCallback">
+    </script>
+
+    <link rel="stylesheet" href="style.css" >
+  </head>
+  <body>
+
+   <div id="cart">
+    <div id="cart-items"></div>
+
+    <div id="creator-code-section">
+      <label for="creator-code">Support-a-Creator Code</label>
+      <div id="creator-code-input-row">
+        <input type="text" id="creator-code" placeholder="Enter code" />
+        <button onclick="onPromoApplied()">Save</button>
+      </div>
+    </div>
+
+    <div id="code-error" style="display:none;"></div>
+
+    <div id="code-applied">
+        <div id="creator-shoutout"></div>
+        <span data-fsc-order-promocode style="display:none;"></span>
+        <span data-fsc-order-discountTotal style="display:none;"></span>
+    </div>
+
+    <div id="fsc-embedded-checkout-container"></div>
+</div>
+   
+
+  <script>
+  function dataCallback(data) {
+    var container = document.getElementById('cart-items');
+    container.innerHTML = '';
+
+    if (!data || !data.groups || !data.groups[0]) return;
+
+    var items = data.groups[0].items.filter(function(item) {
+      return item.selected === true;
+    });
+
+    items.forEach(function(item) {
+      var html = '';
+      if (item.image) {
+        html += '<img class="cart-item-image" src="' + item.image + '" alt="' + item.display + '" />';
+      }
+      if (item.display) {
+        html += '<div class="cart-item-name">' + item.display + '</div>';
+      }
+      if (item.description && item.description.summary) {
+        html += '<div class="cart-item-description">' + item.description.summary + '</div>';
+      }
+      container.innerHTML += html;
+    });
+  }
+
+ function onPromoApplied() {
+    var code = document.getElementById('creator-code').value;
+    
+    // Clear any previously applied coupon and reset UI
+    fastspring.builder.promo('');
+    document.getElementById('code-applied').style.display = 'none';
+    document.getElementById('code-error').style.display = 'none';
+    document.getElementById('creator-code').classList.remove('valid');
+    document.getElementById('creator-shoutout').textContent = '';
+
+    fetch('/validate-code?code=' + code)
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (data.valid) {
+          fastspring.builder.promo(code);
+          document.getElementById('code-error').style.display = 'none';
+          document.getElementById('creator-code').classList.add('valid');
+          setTimeout(function() {
+            var discount = document.querySelector('[data-fsc-order-discountTotal]').textContent.trim();
+            document.getElementById('code-applied').style.display = 'block';
+            if (discount && discount !== '$0.00') {
+              document.getElementById('creator-shoutout').textContent =
+                'Your code was applied for a ' + discount + ' discount! Thanks for supporting ' + data.creatorName + '!';
+            } else {
+              document.getElementById('creator-shoutout').textContent =
+                'Thanks for supporting ' + data.creatorName + '!';
+            }
+          }, 1500);
+        } else {
+          fastspring.builder.promo(code);
+          setTimeout(function() {
+            var discount = document.querySelector('[data-fsc-order-discountTotal]').textContent.trim();
+            if (discount && discount !== '$0.00') {
+              document.getElementById('code-applied').style.display = 'block';
+              document.getElementById('code-error').style.display = 'none';
+              document.getElementById('creator-shoutout').textContent =
+                'Your code was applied for a ' + discount + ' discount!';
+            } else {
+              document.getElementById('code-error').textContent = 'Sorry, that\'s not a valid code.';
+              document.getElementById('code-error').style.display = 'block';
+              document.getElementById('code-applied').style.display = 'none';
+            }
+          }, 1500);
+        }
+      });
+  }
+  
+  document.getElementById('creator-code').addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+      onPromoApplied();
+    }
+  });
+
+  document.addEventListener("DOMContentLoaded", function () {
+    fastspring.builder.reset();
+    fastspring.builder.add("1000-eggblast-coins");
+  });
+</script>
+  </body>
+</html>
