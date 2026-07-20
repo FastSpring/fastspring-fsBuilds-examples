@@ -4,6 +4,8 @@ This is a working reference implementation showing how to connect a [Nexus](http
 
 This project lives inside FastSpring's [fastspring-fsBuilds-examples](https://github.com/FastSpring/fastspring-fsBuilds-examples) repo, alongside other FSBuilds projects — standalone templates that show developers how to set up specific FastSpring integrations.
 
+> **Note:** This is a reference example, not an actively maintained SDK or library. It reflects the FastSpring and Nexus APIs as of its publish date and may not account for later changes to either platform. Check the linked documentation below for current behavior before building on this.
+
 ---
 
 ## What This Integration Does
