@@ -2,7 +2,9 @@
 
 This is a working reference implementation showing how to connect a [Nexus](https://nexus.gg) creator program to a [FastSpring](https://fastspring.com) embedded checkout. It demonstrates the full flow: a buyer enters a creator code, the code is validated against Nexus, a discount is optionally applied, and after purchase the attribution is recorded in Nexus so the creator gets credit.
 
-This repo is part of the FSBuilds series — standalone templates that show developers how to set up specific FastSpring integrations.
+This project lives inside FastSpring's [fastspring-fsBuilds-examples](https://github.com/FastSpring/fastspring-fsBuilds-examples) repo, alongside other FSBuilds projects — standalone templates that show developers how to set up specific FastSpring integrations.
+
+> **Note:** This is a reference example, not an actively maintained SDK or library. It reflects the FastSpring and Nexus APIs as of its publish date and may not account for later changes to either platform. Check the linked documentation below for current behavior before building on this.
 
 ---
 
@@ -51,12 +53,25 @@ FastSpring needs to send order data to your server after a purchase. During loca
 
 ## Setup
 
-### 1. Clone the repo
+### 1. Get the project files
 
-```bash
-git clone https://github.com/FS-EricaB/fsbuilds-nexus-integration.git
-cd fsbuilds-nexus-integration
-```
+This project lives inside FastSpring's shared [fastspring-fsBuilds-examples](https://github.com/FastSpring/fastspring-fsBuilds-examples) repo as one folder among several. You don't need to clone the whole repo to use this integration — just grab the `fsbuilds-nexus-integration` folder:
+
+1. Go to [fsbuilds-nexus-integration on GitHub](https://github.com/FastSpring/fastspring-fsBuilds-examples/tree/main/fsbuilds-nexus-integration)
+2. Click the **`...`** menu at the top right of the file list
+3. Select **Download directory**
+
+This downloads just this folder as a zip — no git required. Unzip it, then open a terminal inside the unzipped folder for the rest of the steps below.
+
+> **Want to track future updates instead of a one-time download?** Use a sparse checkout so you only pull this folder, but can still `git pull` updates later:
+> ```bash
+> git clone --no-checkout --filter=blob:none https://github.com/FastSpring/fastspring-fsBuilds-examples.git
+> cd fastspring-fsBuilds-examples
+> git sparse-checkout init --cone
+> git sparse-checkout set fsbuilds-nexus-integration
+> git checkout main
+> cd fsbuilds-nexus-integration
+> ```
 
 ### 2. Install dependencies
 
@@ -195,4 +210,3 @@ To test all four creator code states you'll need:
 - [Nexus Key Documentation](https://docs.nexus.gg/api-quick-start-guide#if-you-must-use-a-global-key)
 - [FastSpring Store Builder Library](https://developer.fastspring.com/reference/store-builder-library-overview)
 - [FastSpring Webhooks Reference](https://developer.fastspring.com/reference/webhooks-overview)
-
