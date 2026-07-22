@@ -1,0 +1,19 @@
+{
+  "name": "discord-store-bot",
+  "version": "1.0.0",
+  "description": "FastSpring-powered in-game store Discord bot — an fsBuilds project",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "discord.js": "^14.15.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
