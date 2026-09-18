@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4855d875d505e4502906227f347d0d2c, type: 3}
+  m_Name: LegendaryMonsters
+  m_EditorClassIdentifier: 
+  monsterName: Legendary
+  sprites:
+  - {fileID: -5818387944892880104, guid: 039f404f42d2f4304b8e2300a4ac4ba5, type: 3}
+  - {fileID: -1694486503702177756, guid: 9ca0580649d9649d29a407825181466c, type: 3}
+  - {fileID: -6755243406948528807, guid: 954d0ece246c84efbb17fd63e1a682f7, type: 3}
+  - {fileID: -18467818543253675, guid: 857f16e7c94534b0898b148e2af6ed84, type: 3}
+  maxHP: 10
+  coinReward: 10
+  spawnWeight: 0.05

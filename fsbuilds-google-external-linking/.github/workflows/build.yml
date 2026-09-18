@@ -1,0 +1,333 @@
+name: Generate Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Build target"
+        required: true
+        default: android-webview
+        type: choice
+        options:
+          - android-webview
+          - android-chrometabs
+          - android-externalchrome
+          - ios-simulator
+          - ios-device-safariwebview
+          - ios-device-webview
+          - rn-android-apk
+          - rn-ios-xcodeproj
+
+jobs:
+  build:
+    runs-on: [self-hosted]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Clean previous Unity builds
+        run: rm -rf Unity-UGS/Unity/Builds/* || true
+
+      # -------------------------
+      # React Native: setup Node & deps
+      # -------------------------
+      - name: Setup Node for React Native
+        if: ${{ startsWith(github.event.inputs.target, 'rn-') }}
+        run: |
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          nvm use 20 || nvm install 20
+          node --version
+          npm --version
+
+      - name: Install React Native dependencies
+        if: ${{ startsWith(github.event.inputs.target, 'rn-') }}
+        working-directory: Native/App/FSReactApp
+        run: |
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          
+          if [ -f yarn.lock ]; then
+            echo "Using yarn"
+            corepack enable
+            yarn install --frozen-lockfile
+          else
+            echo "Using npm"
+            npm ci
+          fi
+
+      # -------------------------
+      # Unity build
+      # -------------------------
+      - name: Unity Export
+        if: ${{ !startsWith(github.event.inputs.target, 'rn-') }}
+        run: |
+          UNITY="/Applications/Unity/Hub/Editor/6000.0.59f2/Unity.app/Contents/MacOS/Unity"
+          PROJECT_PATH="$GITHUB_WORKSPACE/Unity-UGS/Unity"
+
+          case "${{ github.event.inputs.target }}" in
+            android-webview)
+              $UNITY -batchmode -nographics -quit \
+                -projectPath "$PROJECT_PATH" \
+                -executeMethod Editor.BuildScript.BuildAndroidWebView
+              ;;
+            android-chrometabs)
+              $UNITY -batchmode -nographics -quit \
+                -projectPath "$PROJECT_PATH" \
+                -executeMethod Editor.BuildScript.BuildAndroidChromeTabs
+              ;;
+            android-externalchrome)
+              $UNITY -batchmode -nographics -quit \
+                -projectPath "$PROJECT_PATH" \
+                -executeMethod Editor.BuildScript.BuildAndroidExternalChrome
+              ;;
+            ios-simulator)
+              $UNITY -batchmode -nographics -quit \
+                -projectPath "$PROJECT_PATH" \
+                -executeMethod Editor.BuildScript.BuildiOSSimulator
+              ;;
+            ios-device-safariwebview)
+              $UNITY -batchmode -nographics -quit \
+                -projectPath "$PROJECT_PATH" \
+                -executeMethod Editor.BuildScript.BuildiOSDevice
+              ;;
+            ios-device-webview)
+              $UNITY -batchmode -nographics -quit \
+                -projectPath "$PROJECT_PATH" \
+                -executeMethod Editor.BuildScript.BuildiOSDeviceWebView
+              ;;
+            *)
+              echo "Unknown Unity target"; exit 0
+              ;;
+          esac
+
+      # -------------------------
+      # React Native: Android APK
+      # -------------------------
+      - name: Build React Native Android APK
+        if: ${{ github.event.inputs.target == 'rn-android-apk' }}
+        working-directory: Native/App/FSReactApp/android
+        run: |
+          chmod +x ./gradlew
+          JAVA_HOME=$(/usr/libexec/java_home -v 17) ./gradlew assembleRelease
+
+      - name: Upload React Native Android APK
+        if: ${{ github.event.inputs.target == 'rn-android-apk' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: FSReactApp-android-apk
+          path: Native/App/FSReactApp/android/app/build/outputs/apk/release/app-release.apk
+
+      # -------------------------
+      # React Native: iOS CocoaPods (shared for Xcodeproj + Simulator)
+      # -------------------------
+      - name: Install CocoaPods for React Native iOS
+        if: ${{ github.event.inputs.target == 'rn-ios-xcodeproj' || github.event.inputs.target == 'rn-ios-simulator' }}
+        run: |
+          # Ensure CocoaPods is installed
+          if ! command -v pod &> /dev/null; then
+            sudo gem install cocoapods
+          fi
+          
+          echo "Using pod at: $(which pod)"
+          pod --version
+
+      # -------------------------
+      # React Native: iOS Xcode project
+      # -------------------------
+      - name: Export React Native iOS Xcode project
+        if: ${{ github.event.inputs.target == 'rn-ios-xcodeproj' }}
+        working-directory: Native/App/FSReactApp
+        run: |
+          echo "Exporting iOS project with Expo..."
+          
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          
+          npx expo prebuild --platform ios --clean
+
+          npx expo export --platform ios --output-dir ios-export
+
+          BUNDLE_FILE=$(find ios-export/_expo/static/js/ios -name "*.hbc" | head -n 1)
+          if [ -z "$BUNDLE_FILE" ]; then
+            echo "Error: No bundle file found"
+            exit 1
+          fi
+          cp "$BUNDLE_FILE" ios/main.jsbundle
+
+          if [ -d "ios-export/assets" ]; then
+            mkdir -p ios/bundle-assets
+            cp -r ios-export/assets/* ios/bundle-assets/
+          fi
+
+          echo 'export SKIP_BUNDLING=1' > ios/.xcode.env
+
+          rm -rf ios/Pods
+          rm -f ios/Podfile.lock
+          rm -rf ios/*.xcworkspace
+          rm -rf ios/build
+
+          echo '#!/bin/bash' > SETUP.sh
+          echo 'cd ios' >> SETUP.sh
+          echo 'echo "Installing CocoaPods dependencies..."' >> SETUP.sh
+          echo 'pod install' >> SETUP.sh
+          echo 'echo ""' >> SETUP.sh
+          echo 'echo "Setup complete!"' >> SETUP.sh
+          echo 'echo "Run: open ios/FSReactApp.xcworkspace"' >> SETUP.sh
+          chmod +x SETUP.sh
+
+          rm -rf android
+          rm -rf ios-export
+
+          echo "Packaging complete project..."
+          zip -r iOS-ReactNative-FSReactApp.zip . \
+            -x ".git/*" \
+            -x ".expo/*" \
+            -x "android/*" \
+            -x "ios/build/*" \
+            -x "ios/Pods/*" \
+            -x "ios/*.xcworkspace" \
+            -x "*.DS_Store" \
+            -x "ios/.xcode.env.local"
+          
+          echo "FSReactApp - iOS Xcode Project" > README.txt
+          echo "" >> README.txt
+          echo "REQUIREMENTS:" >> README.txt
+          echo "- macOS with Xcode 14+" >> README.txt
+          echo "- CocoaPods" >> README.txt
+          echo "" >> README.txt
+          echo "INSTALL DEPENDENCIES:" >> README.txt
+          echo "If you don't have CocoaPods installed:" >> README.txt
+          echo "  sudo gem install cocoapods" >> README.txt
+          echo "" >> README.txt
+          echo "SETUP (run once):" >> README.txt
+          echo "1. Unzip the project" >> README.txt
+          echo "2. Run: ./SETUP.sh" >> README.txt
+          echo "   (This installs iOS dependencies via CocoaPods)" >> README.txt
+          echo "" >> README.txt
+          echo "BUILD:" >> README.txt
+          echo "3. Open ios/FSReactApp.xcworkspace" >> README.txt
+          echo "4. Select your device/simulator" >> README.txt
+          echo "5. Select your team in Signing & Capabilities" >> README.txt
+          echo "6. Click Run" >> README.txt
+          echo "" >> README.txt
+          echo "NOTE: JavaScript is pre-bundled. No Metro or Node.js needed." >> README.txt
+          
+          zip -u iOS-ReactNative-FSReactApp.zip README.txt
+          
+          echo "✅ iOS project exported and packaged"
+
+      - name: Upload React Native iOS Xcode project
+        if: ${{ github.event.inputs.target == 'rn-ios-xcodeproj' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: FSReactApp-ios-xcodeproj
+          path: Native/App/FSReactApp/iOS-ReactNative-FSReactApp.zip
+
+      # -------------------------
+      # Unity: iOS Simulator build & packaging
+      # -------------------------
+      - name: Xcode Build (Simulator)
+        if: ${{ github.event.inputs.target == 'ios-simulator' }}
+        run: |
+          PROJECT_PATH="$GITHUB_WORKSPACE/Unity-UGS/Unity/Builds/iOS-Simulator"
+          DERIVED_DATA="$PROJECT_PATH/build"
+          
+          echo "Building for iOS Simulator (x86_64 only for Rosetta)..."
+          xcodebuild \
+            -project "$PROJECT_PATH/Unity-iPhone.xcodeproj" \
+            -scheme Unity-iPhone \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -arch x86_64 \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            -derivedDataPath "$DERIVED_DATA" \
+            build
+
+          APP_PATH=$(find "$DERIVED_DATA/Build/Products/Debug-iphonesimulator" -name "*.app" -type d | head -n 1)
+          if [ -z "$APP_PATH" ]; then
+            echo "No .app found!"
+            exit 1
+          fi
+          echo "Found app: $APP_PATH"
+
+      - name: Code Sign for Simulator
+        if: ${{ github.event.inputs.target == 'ios-simulator' }}
+        run: |
+          APP_PATH=$(find "$GITHUB_WORKSPACE/Unity-UGS/Unity/Builds/iOS-Simulator/build" -path "*/Debug-iphonesimulator/*.app" -type d | head -n 1)
+          echo "Ad-hoc signing for simulator..."
+          codesign --force --sign - --deep --timestamp=none "$APP_PATH"
+
+      - name: Package Simulator App
+        if: ${{ github.event.inputs.target == 'ios-simulator' }}
+        run: |
+          APP_PATH=$(find "$GITHUB_WORKSPACE/Unity-UGS/Unity/Builds/iOS-Simulator/build" -path "*/Debug-iphonesimulator/*.app" -type d | head -n 1)
+          echo "Packaging app: $APP_PATH"
+          cd "$(dirname "$APP_PATH")"
+          ZIP_NAME="FastSprintUnity-Simulator.zip"
+          zip -r "$ZIP_NAME" "$(basename "$APP_PATH")"
+          mv "$ZIP_NAME" "$GITHUB_WORKSPACE/Unity-UGS/Unity/Builds/"
+          echo "App packaged successfully"
+
+      - name: Package iOS Device (SafariWebView)
+        if: ${{ github.event.inputs.target == 'ios-device-safariwebview' }}
+        run: |
+          PROJECT_PATH="$GITHUB_WORKSPACE/Unity-UGS/Unity/Builds/iOS-Device"
+          echo "Zipping iOS Device (SafariWebView) Xcode project..."
+          cd "$(dirname "$PROJECT_PATH")"
+          zip -r "iOS-Device-SafariWebView.zip" "$(basename "$PROJECT_PATH")"
+          echo "iOS Device (SafariWebView) project packaged successfully"
+
+      - name: Package iOS Device (WebView)
+        if: ${{ github.event.inputs.target == 'ios-device-webview' }}
+        run: |
+          PROJECT_PATH="$GITHUB_WORKSPACE/Unity-UGS/Unity/Builds/iOS-Device-WebView"
+          echo "Zipping iOS Device (WebView) Xcode project..."
+          cd "$(dirname "$PROJECT_PATH")"
+          zip -r "iOS-Device-WebView.zip" "$(basename "$PROJECT_PATH")"
+          echo "iOS Device (WebView) project packaged successfully"
+
+      - name: Upload Android (WebView)
+        if: ${{ github.event.inputs.target == 'android-webview' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: FastSprintUnity-android-webview
+          path: Unity-UGS/Unity/Builds/Android-WebView/FastSprintUnity-WebView.apk
+
+      - name: Upload Android (ChromeTabs)
+        if: ${{ github.event.inputs.target == 'android-chrometabs' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: FastSprintUnity-android-chrometabs
+          path: Unity-UGS/Unity/Builds/Android-ChromeTabs/FastSprintUnity-ChromeTabs.apk
+
+      - name: Upload Android (ExternalChrome)
+        if: ${{ github.event.inputs.target == 'android-externalchrome' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: FastSprintUnity-android-externalchrome
+          path: Unity-UGS/Unity/Builds/Android-ExternalChrome/FastSprintUnity-ExternalChrome.apk
+
+      - name: Upload iOS Simulator ZIP
+        if: ${{ github.event.inputs.target == 'ios-simulator' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: FastSprintUnity-ios-simulator
+          path: Unity-UGS/Unity/Builds/FastSprintUnity-Simulator.zip
+
+      - name: Upload iOS Device (SafariWebView) ZIP
+        if: ${{ github.event.inputs.target == 'ios-device-safariwebview' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: FastSprintUnity-ios-device-safariwebview
+          path: Unity-UGS/Unity/Builds/iOS-Device-SafariWebView.zip
+
+      - name: Upload iOS Device (WebView) ZIP
+        if: ${{ github.event.inputs.target == 'ios-device-webview' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: FastSprintUnity-ios-device-webview
+          path: Unity-UGS/Unity/Builds/iOS-Device-WebView.zip

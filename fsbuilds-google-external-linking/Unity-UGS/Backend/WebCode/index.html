@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>FastSpring Embedded Store</title>
+    <link rel="stylesheet" href="style.css" />
+    <script
+            id="fsc-api"
+            src="https://sbl.onfastspring.com/sbl/1.0.5/fastspring-builder.min.js"
+            type="text/javascript"
+            data-storefront="ericateststore.test.onfastspring.com/embedded-EggBlastArena"
+            data-popup-webhook-received="onFSPopupClosed"
+            data-error-callback="onFSError"
+            data-access-key="-I0BLEOYRTWPXFUORBQ03W">
+    </script>
+</head>
+<body>
+<div class="store-container">
+    <div id="checkout-header"></div>
+ <div id="fsc-embedded-checkout-container"></div>
+</div>
+
+<script src="store.js"></script>
+</body>
+</html>
