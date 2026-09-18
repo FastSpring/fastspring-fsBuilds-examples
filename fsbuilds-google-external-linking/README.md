@@ -287,9 +287,9 @@ This started as a proof of concept and picked up real hardening over time. Curre
 
 ## Status and known issues
 
-### Google's `externaltransactions` API sometimes rejects the required field
+### RESOLVED (2026-09-18): Google's `externaltransactions` API previously rejected the required field
 
-As of this repo's last update, calls to report a transaction can fail with:
+Between 2026-08-28 and 2026-09-18, calls to report a transaction could fail with:
 
 ```
 HTTP 400 INVALID_ARGUMENT
@@ -302,9 +302,9 @@ Field external_transaction.external_content_link_details must be set for externa
 - `externalContentLinkDetails` isn't in the public schema, but Google's parser does accept the field name (an unknown field produces a distinct "Cannot find field" error, which this doesn't) — its value just doesn't seem to reach validation, whether populated, empty, or omitted.
 - Region and payload ordering have been ruled out as causes.
 
-Current read: a server-side gating/allowlist gap on Google's side for this app's access to Content Links reporting, not a client payload bug — worth a Google Play developer support ticket referencing the exact error and package name if you hit this. The architecture in this repo (real order data, reported immediately from the webhook, idempotent against redelivery) is correct regardless of whether this specific Google-side issue is resolved for your app.
+At the time, the read was a server-side gating/allowlist gap on Google's side for this app's access to Content Links reporting, not a client payload bug — consistent with Google's public REST schema then documenting only `externalOfferDetails` (a different program), while `externalContentLinkDetails` was accepted by the parser but stripped before validation.
 
-**Update (2026-09-18):** Google's public REST reference for `externaltransactions` (`https://developers.google.com/android-publisher/api-ref/rest/v3/externaltransactions`) now fully documents `ExternalContentLinkDetails`, with `linkType` marked **Required** — matching exactly what this repo already sends. That page's own "last updated" date is 2026-09-02, after this investigation's 2026-08-28 date above. This is consistent with the allowlist/documentation gap having since closed on Google's side, but it hasn't been re-verified against a live call — the concrete next step is to re-run an actual `createexternaltransaction` request and confirm the 400 is gone before treating this as resolved.
+**Confirmed resolved 2026-09-18.** Google's public REST reference for `externaltransactions` now fully documents `ExternalContentLinkDetails`, with `linkType` marked **Required** — matching exactly what this repo sends — and a live test call against the real endpoint (`scripts/test-google-report.ts`, same request shape as `app/utils/google.ts`'s `reportTransactionToGoogle`) returned `200 OK` with `transactionState: TRANSACTION_REPORTED` and `externalContentLinkDetails` echoed back unchanged. No code changes were needed — this was purely a Google-side gap that has since closed. If you're building against this program today, `externalContentLinkDetails` with `linkType` should work as documented; if you still hit the 400 above, it may be an account-specific enrollment/allowlist issue worth a support ticket, not something wrong with this repo's request shape.
 
 ### Other open items
 
