@@ -1,0 +1,4 @@
+## Public cert
+openssl req -new -x509 -key privatekey.pem -out publiccert.pem -days 3650 -subj "/CN=fastspring"
+# Private cert
+openssl genrsa -out privatekey.pem 2048

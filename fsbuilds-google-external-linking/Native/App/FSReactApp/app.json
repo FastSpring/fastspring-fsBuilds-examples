@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "FSReactApp",
+    "slug": "FSReactApp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/FastSpring-spring-icon-square.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "scheme": "fsreactapp",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ollieinteractive.fsreactapp"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/FastSpring-spring-icon-square.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.ollieinteractive.fsreactapp"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}

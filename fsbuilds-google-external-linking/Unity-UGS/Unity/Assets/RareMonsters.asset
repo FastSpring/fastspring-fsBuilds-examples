@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4855d875d505e4502906227f347d0d2c, type: 3}
+  m_Name: RareMonsters
+  m_EditorClassIdentifier: 
+  monsterName: Rare
+  sprites:
+  - {fileID: 6140411778520232351, guid: ebcf37ec31cd94804b9e7b676d8249ca, type: 3}
+  - {fileID: 5886867160542616919, guid: cbe458eb757384ccfaf987cf5ab67ced, type: 3}
+  - {fileID: 2213445003190089983, guid: 4a63c7509a54e4cc0a69171b38ed0a5f, type: 3}
+  - {fileID: -8824270939960012931, guid: 0536e43a7c76d4012b0ca98547d03765, type: 3}
+  maxHP: 5
+  coinReward: 5
+  spawnWeight: 0.15

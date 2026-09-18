@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.ollieinteractive.store">
+    <queries>
+        <intent>
+            <action android:name="org.chromium.intent.action.PAY"/>
+        </intent>
+        <intent>
+            <action android:name="org.chromium.intent.action.IS_READY_TO_PAY"/>
+        </intent>
+        <intent>
+            <action android:name="org.chromium.intent.action.UPDATE_PAYMENT_DETAILS"/>
+        </intent>
+    </queries>
+    
+    <uses-permission android:name="android.permission.INTERNET" />
+    
+    <application>
+        <activity
+                android:name="com.ollieinteractive.store.CustomUnityPlayerActivity"
+                android:launchMode="singleTask"
+                android:screenOrientation="landscape"
+                android:configChanges="locale|touchscreen|keyboard|keyboardHidden|navigation|screenLayout|screenSize|orientation|uiMode|smallestScreenSize"
+                android:hardwareAccelerated="true"
+                android:resizeableActivity="false"
+                android:exported="true">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Fastspring deep link -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="fastspring" android:host="shop-return" />
+            </intent-filter>
+        </activity>
+        <!-- Only ever launched in-process (WebViewProvider.java builds an
+             explicit Intent targeting this Activity class directly) — never
+             exported, or any other app on the device could target it with
+             an arbitrary extra_url and have it render in this app's own
+             WebView with JS and the Payment Request API enabled. -->
+        <activity android:name="com.ollieinteractive.store.WebViewActivity"
+                  android:exported="false"
+                  android:theme="@android:style/Theme.NoTitleBar.Fullscreen"/>
+    </application>
+</manifest>

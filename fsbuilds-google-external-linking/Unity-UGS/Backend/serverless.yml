@@ -1,0 +1,42 @@
+service: fastspring-poc
+
+variablesResolutionMode: 20210326
+
+provider:
+  name: aws
+  runtime: nodejs22.x
+  lambdaHashingVersion: 20201221
+  environment:
+    UGS_PROJECT_ID: {{YOUR_UGS_PROJECT_ID}}
+    UGS_ENV_ID: {{YOUR_UGS_ENV_ID}}
+    UGS_SERVICE_ACCOUNT_SECRET: ${ssm:ugs-service-account-secret}
+    PEM_PRIVATE_KEY: ${ssm:pem-private-key}
+    # Added when app/handler/webhook.ts gained signature verification and
+    # Google-reporting/DB persistence — postback's Lambda deploy was
+    # otherwise missing all three and would fail closed (500) on every
+    # invocation. Railway/Express (server.ts) is the actively maintained
+    # deploy target; these SSM parameters need to exist for this Lambda
+    # path to actually work if it's ever used.
+    FASTSPRING_WEBHOOK_SECRET: ${ssm:fastspring-webhook-secret}
+    DATABASE_URL: ${ssm:database-url}
+    GOOGLE_SERVICE_ACCOUNT_JSON: ${ssm:google-service-account-json}
+
+plugins:
+  - serverless-plugin-typescript
+
+functions:
+  postback:
+    handler: app/handler/webhook.handler
+    events:
+      - http:
+          path: webhook
+          method: post
+          cors: true
+
+  encode:
+    handler: app/handler/encode.handler
+    events:
+      - http:
+          path: encode
+          method: post
+          cors: true

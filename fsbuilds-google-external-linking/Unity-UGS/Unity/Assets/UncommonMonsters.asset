@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4855d875d505e4502906227f347d0d2c, type: 3}
+  m_Name: UncommonMonsters
+  m_EditorClassIdentifier: 
+  monsterName: Uncommon
+  sprites:
+  - {fileID: -4640069781057306600, guid: 4b1638339ca0e4f5a83f1fa47b358e03, type: 3}
+  - {fileID: -3467376556943336327, guid: d17e7e3980525449c934dfd98c396f96, type: 3}
+  - {fileID: 6669240055981858442, guid: 6b22bbb07569645158e916e1025e6138, type: 3}
+  - {fileID: 8340476610952490449, guid: b723d1f1ed8494be2b19a40e937864b3, type: 3}
+  maxHP: 3
+  coinReward: 3
+  spawnWeight: 0.25
