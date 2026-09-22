@@ -1,37 +1,34 @@
 # FSBuilds: Google Play External Content Links Reporting with FastSpring
 
-This repo shows how to report FastSpring transactions back to Google Play's **External Content Links** program (the Android "steering" program — Steer Safe on the FastSpring side), so an Android steering integration stays compliant. It's an **extension of an existing [Steer Safe](https://developer.fastspring.com/docs/fastspring-checkout-integration-with-steer-safe) integration**, not a tutorial for building one from scratch — see [What needs to already be in place](#what-needs-to-already-be-in-place) below.
-
-The reference vehicle is **EggBlast Arena**, a Unity/UGS game. A smaller React Native example (`Native/`) also lives in this repo, showing the same base FastSpring checkout pattern for a subscription app — it does not implement Google steering and isn't covered further here.
+This repo shows how to report FastSpring transactions back to Google Play's **External Content Links** program (the Android "steering" program), so an Android steering integration stays compliant. It's an **extension of an existing [Steer Safe](https://developer.fastspring.com/docs/fastspring-checkout-integration-with-steer-safe) integration**. See [What needs to already be in place](#what-needs-to-already-be-in-place) below.
 
 This project lives inside FastSpring's [fastspring-fsBuilds-examples](https://github.com/FastSpring/fastspring-fsBuilds-examples) repo, alongside other FSBuilds projects.
 
-> **Note:** This is a reference example, not an actively maintained SDK. It reflects the FastSpring, Google Play, and Unity APIs as of its last update and may not account for later changes to any of the three. Check the linked documentation in [Related resources](#related-resources) for current behavior. See [Status and known issues](#status-and-known-issues) before assuming any single piece is production-ready as-is.
+> **Note:** The reference vehicle is a POC Unity/UGS game, not an actively maintained SDK. This specific build does not cover raw Android/Kotlin. It reflects the FastSpring, Google Play, and Unity APIs as of its last update and may not account for later changes to any of the three. Check the linked documentation in [Related resources](#related-resources) for current behavior. See [Status and known issues](#status-and-known-issues) before assuming any single piece is production-ready as-is.
 
-**Scope note:** this is only about linking out to a **web store** for digital items, and only about **reporting** those transactions to Google — it's a US program specifically. Two things deliberately out of scope, on purpose:
-- **External Content Links also covers linking to external *app downloads*** — a different flow with its own enrollment and reporting steps (`LINK_TO_APP_DOWNLOAD`, $0 reports for the download itself). Not covered here.
-- **Google's separate External Offers program is for the EEA**, not the US, implemented differently with its own APIs. Don't assume the two are interchangeable.
-- **Apple has an analogous External Purchase Link program** for the EU/Japan, with its own token/reporting model — see the separate `feature/apple-external-purchase-link` branch of the dev repo this was built from. Not covered here.
+**Scope note:** the purpose of this build is to compliantly **report** transactions to Google — it's a US program specifically. Two things deliberately out of scope, on purpose:
+- **External Content Links also covers linking to external *app downloads*** — although part of the External Content Links program, it is a different flow with its own enrollment and reporting steps and is not covered here.
+- **Google's separate External Offers program is for the EEA**, this is a regional program and implemented differently than the US specific External Content Links program with its own APIs. The two are not interchangeable.
 
 ---
 
 ## What needs to already be in place
 
-This repo assumes, not builds, the following — full implementation of these is covered in FastSpring's [Steer Safe integration docs](https://developer.fastspring.com/docs/fastspring-checkout-integration-with-steer-safe):
+This repo assumes the FastSpring Steer Safe process is implemented. 
 
-- **A FastSpring store using Steer Safe**, with an embedded checkout and at least one product configured.
-- **Monetization wired through Unity** (or your engine of choice) via that Steer Safe integration — generating and opening a signed FastSpring checkout, granting the entitlement/currency on `order.completed`, and a multi-platform native web-store implementation (Chrome Custom Tab / WebView / Safari view controller depending on platform) are all assumed already working, not documented here.
+- **A FastSpring store using Steer Safe**, This process is covered in FastSpring's [Steer Safe integration docs](https://developer.fastspring.com/docs/fastspring-checkout-integration-with-steer-safe). This includes an embedded FastSpring checkout and at least one product configured.
+- **Monetization wired through Unity** via that Steer Safe integration. The POC uses Unity, but you may use your engine of choice. It must generate and open a signed FastSpring checkout, grant the entitlement/currency on `order.completed`. Additionally, you must have a native web-store implementation. These elements are all assumed already working, not documented here.
 - **A published Android app already using Google Play Billing Library 8.2.1 or higher.**
 
-Because the app is already published on Play Billing, the Google Play Developer API side is largely already set up too — the one thing that may still need attention is **permissions** on the existing service account (see [Enrollment](#enrollment--setup), step 4).
+Because the app is already published on Play Billing, the required Google Play Developer API is largely set up. The one thing that may still need attention is **permissions** on the existing service account (see [Enrollment](#enrollment--setup), step 4).
 
-> **Warning:** External Content Links is a *US-eligibility, per-user, per-enrollment* program. `IsBillingProgramAvailableAsync` returning `BillingUnavailable` for a given user is an expected, common outcome, not a bug — plan for that path, don't just test the happy path.
+> **Warning:** External Content Links is a *US-eligibility, per-user, per-enrollment* program. `IsBillingProgramAvailableAsync` returning `BillingUnavailable` for a given user is an expected, common outcome, not a bug. Test known ineligible paths.
 
 ---
 
 ## How it works
 
-This becomes part of the existing Steer Safe process — nothing about the base flow changes, two things are added to it:
+This becomes part of the existing Steer Safe process. The base flow does not change, instead, two things are added to it:
 
 ```
 Initiate purchase
@@ -74,14 +71,12 @@ sequenceDiagram
     Client->>Client: Poll balance, show thank-you popup
 ```
 
-**Currency granting and Google reporting are two independent obligations, not one.** Coins arrive purely through the FastSpring webhook — that part is standard Steer Safe and isn't detailed further here. Google reporting is a compliance step the program requires regardless of whether the player ever notices; a failure there never blocks or reverses the purchase.
+**Currency granting and Google reporting are two independent obligations.** Entitlements arrive purely through the FastSpring webhook as part of the standard Steer Safe flow and isn't detailed further here. Google reporting is a compliance step the program requires. A reporting failure there never blocks or reverses the purchase.
 
 | Case | Result |
 |---|---|
 | Eligible | Google's disclosure dialog shown, single-use token generated, checkout opened with the token tagged onto the order, sale reported to Google after purchase. |
 | Not eligible (`BillingUnavailable`, not enrolled, wrong region) | No token, no dialog. Checkout opens normally via the existing Steer Safe flow. Currency is still granted. No Google report is attempted or owed. |
-
-"Not eligible" is the common case, not an edge case — it usually just means the user isn't in an eligible country.
 
 ---
 
@@ -92,7 +87,7 @@ Verified as of 9/17/2026.
 1. **Confirm eligibility** — see [Google's requirements](https://support.google.com/googleplay/android-developer/answer/16470497).
 2. **Complete Google's [external content links declaration form](https://support.google.com/googleplay/android-developer/contact/external_content_links).** Allow up to **7 days** for an initial response, and expect possible back-and-forth before it's fully approved.
 3. **Enroll the app in Play Console:** Settings → **External content links**.
-4. **Grant the Play Developer API the right permissions.** Since the app is already published with Play Billing, a service account with API access likely already exists — it may just need updating. In Play Console → **Users and permissions**, grant that service account:
+4. **Grant the Play Developer API the required permissions.** The service account with API access should already exist, but may need updating. In Play Console → **Users and permissions**, grant the service account:
    - **View financial data, orders, and cancellation survey responses**
    - **Manage orders and subscriptions**
 
@@ -102,7 +97,7 @@ Verified as of 9/17/2026.
 
 ## Client implementation (Unity)
 
-Scoped to games built in Unity, via Unity IAP's `ExternalBillingProgramClient` (`UnityEngine.Purchasing.GoogleBilling.Models`) — not raw Android/Kotlin. This is additive to an existing Play Billing integration; the surrounding checkout mechanics (secure payload, deep link return, balance polling) are the same Steer Safe machinery you already have. Four changes, in the order you'd make them — this repo's own [`GoogleBillingManager.cs`](Unity-UGS/Unity/Assets/Scripts/Managers/GoogleBillingManager.cs) ([documentation](Unity-UGS/Unity/Assets/Scripts/Managers/GoogleBillingManager-documentation.md)) is the tested reference implementation.
+Scoped to games built in Unity, via Unity IAP's `ExternalBillingProgramClient` (`UnityEngine.Purchasing.GoogleBilling.Models`). This is additive to an existing Play Billing integration; the surrounding checkout mechanics (secure payload, deep link return, balance polling) are the same Steer Safe mechanism you already have. These are the four updates to that flow in the order you'd make them. [`GoogleBillingManager.cs`](Unity-UGS/Unity/Assets/Scripts/Managers/GoogleBillingManager.cs) ([documentation](Unity-UGS/Unity/Assets/Scripts/Managers/GoogleBillingManager-documentation.md)) in this repo is the tested reference implementation.
 
 **1. Create the client once and connect it once — reuse both for the app's lifetime.**
 
@@ -138,7 +133,7 @@ private async Task<bool> EnsureConnectedAsync()
 
 `StartConnection`/`EndConnection` are meant to be paired once per client lifetime — calling `StartConnection` again while a connection is already open is unsupported and can leak service bindings. Call `EnsureConnectedAsync()` at the start of a purchase attempt; it's a no-op after the first successful connect.
 
-**2. When the player taps "Buy," check eligibility first — every time, not once at launch.**
+**2. When the player taps "Buy," check eligibility first — every time.**
 
 ```csharp
 var connected = await EnsureConnectedAsync();
@@ -154,9 +149,9 @@ if (availability != GoogleBillingResponseCode.Ok)
 }
 ```
 
-Eligibility isn't something to check once when the client connects and cache for the session — a player's country/enrollment status can change between app launch and a purchase later that session. Call this at the start of every purchase attempt, immediately before step 3.
+Eligibility isn't something to check on app load and cache for the session — a player's country/enrollment status can change between app launch and a purchase later that session. Call this at the start of every purchase attempt, immediately before step 3.
 
-**3. Once eligible, generate a fresh token — every single time.**
+**3. Once eligible, generate a fresh token.**
 
 ```csharp
 var reportingDetails = await _billingClient.CreateBillingProgramReportingDetailsAsync();
@@ -183,7 +178,7 @@ if (launchResponse != GoogleBillingResponseCode.Ok) return;
 // yourself through your existing Steer Safe checkout provider.
 ```
 
-`CALLER_WILL_LAUNCH_LINK` means Play shows the disclosure and hands control straight back — your app opens the URL, not Google. That's the right mode for a web store; Google launching the link itself is the app-download case, out of scope here.
+`CALLER_WILL_LAUNCH_LINK` means Play shows the disclosure and hands control back to your app, which opens the URL. 
 
 **Handle every response code this flow can return:**
 
@@ -198,15 +193,15 @@ if (launchResponse != GoogleBillingResponseCode.Ok) return;
 
 **Test with license tester accounts** — Google won't invoice transactions those accounts initiate.
 
-**On the return trip:** the reporting-relevant deep-link handling is threading the token back — the token is tagged onto the FastSpring order at `/encode` time (so the webhook can report immediately) *and* appended to the checkout URL, so the client can ask the backend to confirm/retry reporting (`/reportTransaction`) if the webhook hasn't landed yet. That's the only Google-specific addition to your existing return-deep-link handling; everything else about the return trip (re-authenticating, showing a thank-you popup, polling the balance) is standard Steer Safe and isn't detailed further here.
+**Reporting Compliance:** the reporting-relevant deep-link handling is threading the token back. The token is tagged onto the FastSpring order at `/encode` time (so the webhook can report immediately) *and* appended to the checkout URL, so the client can ask the backend to confirm/retry reporting (`/reportTransaction`) if the webhook hasn't landed yet. That's the only Google-specific addition to your existing return-deep-link handling; everything else about the return trip (re-authenticating, showing a thank-you popup, polling the balance) is standard Steer Safe and isn't detailed further here.
 
-Source: [Play Billing — external content links integration guide](https://developer.android.com/google/play/billing/externalcontentlinks/integration) (raw Android/Kotlin — this repo's `GoogleBillingManager.cs` is the Unity-mapped version of the same sequence, verified against it directly)
+Source: [Play Billing — external content links integration guide](https://developer.android.com/google/play/billing/externalcontentlinks/integration) 
 
 ---
 
 ## Backend integration
 
-A durable store (Postgres or equivalent) is load-bearing here, not a Google requirement — it holds real order data between the webhook firing and the report going out, since a request can arrive before its webhook does or vice versa. Four steps, in order:
+Use a load bearing backend to hold real order data between the webhook firing and the report going out, since a request can arrive before its webhook does or vice versa. For the backend, there are four steps, in order:
 
 **1. Tag the token onto the FastSpring order at checkout.**
 
@@ -333,13 +328,10 @@ Source: [Play Billing — integrating your backend outside GPB](https://develope
 │   ├── Unity/                  Unity 6000.0.59f2 project (EggBlast Arena)
 │   ├── Backend/                Express/TypeScript server deployed to Railway (also serves WebCode/)
 │   └── ...
-├── Native/                     React Native (Expo) subscription example — no Google steering, not detailed here
-├── docs/                       Related design docs (untracked)
-├── .github/workflows/          Manual "Generate Build" workflow for Unity and RN targets
-└── My project (1)/             Stray empty Unity template project, untracked (safe to delete)
+└── .github/workflows/          Manual "Generate Build" workflow for Unity targets
 ```
 
-Per-folder READMEs go deeper on setup: [Unity-UGS](Unity-UGS/README.md) · [Unity client](Unity-UGS/Unity/README.md) · [Backend](Unity-UGS/Backend/README.md) · [WebCode](Unity-UGS/Backend/WebCode/README.md) · [React Native app](Native/App/FSReactApp/README.md).
+Per-folder READMEs go deeper on setup: [Unity-UGS](Unity-UGS/README.md) · [Unity client](Unity-UGS/Unity/README.md) · [Backend](Unity-UGS/Backend/README.md) · [WebCode](Unity-UGS/Backend/WebCode/README.md).
 
 The backend also exposes a handful of gameplay-economy routes (`/spend`, `/earn`, `/earnEggs`, `/checkLevelUp`) and a separate native-purchase-validation route (`/validateGooglePurchase`) that aren't part of the Google reporting flow described above — see the per-folder READMEs if you need those.
 
@@ -398,34 +390,6 @@ Points specific to the Google reporting layer:
 
 ---
 
-## Status and known issues
-
-### RESOLVED (2026-09-18): Google's `externaltransactions` API previously rejected the required field
-
-Between 2026-08-28 and 2026-09-18, calls to report a transaction could fail with:
-
-```
-HTTP 400 INVALID_ARGUMENT
-Field external_transaction.external_content_link_details must be set for external content link transactions
-```
-
-...even when `externalContentLinkDetails` is populated in the request. What's been established:
-
-- Google's *public* REST schema documents only `externalOfferDetails`, a different program (External Offers, not External Content Links). Sending that field is rejected outright for this app ("must only be set for external offer transactions").
-- `externalContentLinkDetails` isn't in the public schema, but Google's parser does accept the field name (an unknown field produces a distinct "Cannot find field" error, which this doesn't) — its value just doesn't seem to reach validation, whether populated, empty, or omitted.
-- Region and payload ordering have been ruled out as causes.
-
-At the time, the read was a server-side gating/allowlist gap on Google's side for this app's access to Content Links reporting, not a client payload bug.
-
-**Confirmed resolved 2026-09-18.** Google's public REST reference for `externaltransactions` now fully documents `ExternalContentLinkDetails`, with `linkType` marked **Required** — matching exactly what this repo sends — and a live test call against the real endpoint (`scripts/test-google-report.ts`, same request shape as `app/utils/google.ts`'s `reportTransactionToGoogle`) returned `200 OK` with `transactionState: TRANSACTION_REPORTED` and `externalContentLinkDetails` echoed back unchanged. No code changes were needed — this was purely a Google-side gap that has since closed. If you still hit the 400 above, it may be an account-specific enrollment/allowlist issue worth a support ticket, not something wrong with this repo's request shape.
-
-### Other open items
-
-- No automated tests, on either the backend or the Unity client.
-- `My project (1)/` at the repo root is an unrelated, empty Unity template with its own `.git`. It's untracked and safe to delete.
-
----
-
 ## Related resources
 
 - [Unity/UGS and FastSpring checkout integration with Steer Safe™](https://developer.fastspring.com/docs/fastspring-checkout-integration-with-steer-safe) — **start here** for the base integration this repo extends
@@ -434,4 +398,3 @@ At the time, the read was a server-side gating/allowlist gap on Google's side fo
 - [Google Play External Content Links — program overview](https://developer.android.com/google/play/billing/externalcontentlinks)
 - [Google Play External Content Links — integration guidance](https://developer.android.com/google/play/billing/externalcontentlinks/integration)
 - [Google Play External Content Links — enrollment](https://support.google.com/googleplay/android-developer/answer/16470497)
-- `docs/` in this repo (untracked) — related design notes for the analogous Apple External Purchase Link work, on a separate branch
