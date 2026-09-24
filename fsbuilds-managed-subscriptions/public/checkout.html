@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Same static script tag as index.html/product.html - required on
+       every page that needs cart/session data, per fastspring-init.js.
+       Because data-continuous="true" is set everywhere, the cart
+       contents built up on the other pages carry over here automatically. -->
+  <script
+      id="fsc-api"
+      src="{{SBL_SCRIPT_URL}}"
+      type="text/javascript"
+      data-storefront="{{STOREFRONT_URL}}"
+      data-continuous="true"
+      data-data-callback="dataCallback"
+      data-error-callback="fsErrorCallback"
+      data-debug="true">
+  </script>
+</head>
+<body class="page-checkout">
+  <header class="site-header">
+    <div class="container header-row">
+      <div>
+        <div class="brand-name" data-brand-name>Store</div>
+        <div class="brand-tagline" data-brand-tagline></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <a class="back-link" href="index.html">&larr; Choose a different plan</a>
+    <h1 class="page-heading">Checkout</h1>
+
+    <!-- Recap of the single selected subscription - see render-checkout.js. -->
+    <div id="checkout-cart-list" class="cart-summary-list checkout-cart-list"></div>
+
+    <!-- FastSpring renders its payment form directly into this
+         container. Per the confirmed SBL source, this happens
+         automatically as soon as data loads and at least one item is
+         selected in the (continuous) session - no button or extra call
+         is needed to trigger it, and it won't attempt to render at all
+         if the cart is empty. -->
+    <div id="fsc-embedded-checkout-container"></div>
+  </main>
+
+  <script src="../config/store.config.js"></script>
+  <script src="js/apply-brand.js"></script>
+  <script src="js/fastspring-init.js"></script>
+  <script src="js/subscribe-actions.js"></script>
+  <script src="js/render-checkout.js"></script>
+</body>
+</html>

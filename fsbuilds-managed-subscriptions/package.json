@@ -1,0 +1,14 @@
+{
+  "name": "fsbuilds-managed-subscriptions",
+  "version": "1.0.0",
+  "description": "Config-driven FastSpring embedded subscription storefront template - single active subscription, straight to checkout. Fork it, edit config/store.config.js, ship a demo.",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}
