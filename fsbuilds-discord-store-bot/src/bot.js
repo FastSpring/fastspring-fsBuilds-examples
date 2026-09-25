@@ -13,20 +13,23 @@ async function startBot() {
 
   client.on('interactionCreate', async (interaction) => {
     try {
-      // Slash commands
+      // Slash commands.
+      // NOTE: these MUST be awaited (not `return`ed). A returned promise settles
+      // after this try block exits, so its rejection would escape the catch,
+      // surface as an unhandled 'error' on the client, and crash the whole
+      // process. Awaiting keeps any command failure contained to this handler.
       if (interaction.isChatInputCommand()) {
         if (interaction.commandName === 'store') {
-          return storeCommand.execute(interaction);
-        }
-        if (interaction.commandName === 'announce') {
-          return announceCommand.execute(interaction);
+          await storeCommand.execute(interaction);
+        } else if (interaction.commandName === 'announce') {
+          await announceCommand.execute(interaction);
         }
         return;
       }
 
       // /announce product autocomplete
       if (interaction.isAutocomplete() && interaction.commandName === 'announce') {
-        return announceCommand.autocomplete(interaction);
+        await announceCommand.autocomplete(interaction);
       }
     } catch (err) {
       console.error('Unhandled interaction error:', err);

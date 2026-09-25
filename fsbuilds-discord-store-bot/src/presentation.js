@@ -26,26 +26,26 @@ const STORE_BRANDING = {
 };
 
 // Curated, ordered list of FastSpring product paths to feature in this store.
-// Unlike the base build (which lists the whole catalog via GET /products), this
-// fork highlights a hand-picked set — the array order is the display order.
+// A hand-picked set rather than the whole catalog (GET /products) — the array
+// order is the display order.
 // Everything else (name, price, artwork, description) is still pulled live from
 // FastSpring per product.
 const FEATURED_PRODUCTS = [
-  'plasma-overdrive-egg',
-  'infinite-battle-pass',
+  '100-coins',
   'battle-pass',
+  'venomtail-egg',
+  'lavablast-egg',
 ];
 
 // VIP-exclusive products — shown in /store ONLY to VIP players (see src/vip.js).
 // Editable: swap these paths for whichever items you want gated to VIPs.
 const VIP_PRODUCTS = [
-  'time-warp-egg',
-  'titan-forge-egg',
-  'unstable-nucleus-egg',
+  '500-coins',
+  'mega-pack',
 ];
 
 // The subscription product a non-VIP is nudged to buy to unlock VIP perks.
-const VIP_UPSELL_PRODUCT = 'infinite-battle-pass';
+const VIP_UPSELL_PRODUCT = 'battle-pass';
 
 // Shown only when a product has no description set in FastSpring.
 const FALLBACK_BLURB = 'Select to view details and purchase.';

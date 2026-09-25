@@ -1,5 +1,8 @@
+const path = require('path');
 const express = require('express');
 const webhookRouter = require('./routes/webhook');
+const authRouter = require('./routes/auth');
+const checkoutRouter = require('./routes/checkout');
 
 function startServer() {
   const app = express();
@@ -17,6 +20,15 @@ function startServer() {
   );
 
   app.use('/webhook', webhookRouter);
+
+  // Public branding assets (the Eggblast logo shown on the /checkout page).
+  app.use('/assets', express.static(path.join(__dirname, '..', '..', 'assets')));
+
+  // Discord OAuth (one-time account connect) and the per-buy session redirect.
+  // Both build FastSpring sessions server-side, keeping identity/product out of
+  // the URL. These are plain GET routes — no body parser needed.
+  app.use('/auth', authRouter);
+  app.use('/checkout', checkoutRouter);
 
   return new Promise((resolve, reject) => {
     app

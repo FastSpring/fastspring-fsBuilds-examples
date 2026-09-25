@@ -1,52 +1,58 @@
 /**
- * Builds the URL to the hosted Eggblast Arena webshop, pre-filled for a given
- * product and player.
+ * Builds the links the /store message points at.
  *
- * This fork does NOT render checkout itself. Instead, the "Complete Purchase"
- * button links to the game's own webshop (WEBSHOP_URL), which is a full
- * FastSpring SBL storefront. That page reads three query params and pre-fills
- * the cart + buyer identity:
+ * This build no longer stuffs the product + buyer identity into the web-shop URL
+ * as query params. Instead:
  *
- *   uname = Discord username
- *   uid   = Discord user id
- *   prod  = FastSpring product path to pre-select
+ *   - BUY links point back at THIS server's /checkout/:token route, carrying only
+ *     a short-lived SIGNED token (see ../tokens.js). On click, that route creates
+ *     a FastSpring session server-side (product + orderTags + purchaser) and
+ *     renders the embedded checkout. Nothing sensitive or editable is in the URL,
+ *     and tags are guaranteed onto the order (see ../fastspring/sessions.js).
  *
- * (The hosted page also accepts an optional `coupon` param.) The Discord
- * identity flows through as FastSpring order tags at checkout, so the webhook
- * can still confirm the purchase and passively link the account.
+ *   - CONNECT links start the one-time Discord OAuth flow so we can capture the
+ *     player's email (the Sessions API needs a purchaser).
  *
- * SECURITY NOTE (production hardening):
- * These values ride in the URL query string. The link is generated server-side
- * per interaction and shown only to the player who ran /store, so tampering is
- * low-risk for in-game items. For higher-value goods, sign or encrypt these
- * params (see FastSpring "Secure Payloads") so a player can't edit the URL to
- * credit a different account.
+ *   - browseUrl / featureUrl are plain public web-shop links, used by /announce,
+ *     which is posted to the whole server (no single buyer to tag, and a session
+ *     can't be created without a purchaser).
  */
+const tokens = require('../tokens');
+
 const DEFAULT_WEBSHOP_URL = 'https://eggblast.fastspringexamples.com/';
 
-function buildCheckoutUrl(productPath, discordUserId, discordUsername) {
-  const base = process.env.WEBSHOP_URL || DEFAULT_WEBSHOP_URL;
-
-  const params = new URLSearchParams({
-    uname: discordUsername,
-    uid: discordUserId,
-    prod: productPath,
-  });
-
-  // Preserve a single "?" whether or not base already has a trailing slash.
-  const sep = base.includes('?') ? '&' : '?';
-  return `${base}${sep}${params.toString()}`;
+/** Public base URL of THIS bot's server (the tunnel URL in dev). */
+function serverBase() {
+  return (process.env.SERVER_URL || 'http://localhost:3000').replace(/\/$/, '');
 }
 
-/** The webshop's base URL (no params) — for a "browse the whole store" link. */
+/**
+ * A per-player, tamper-proof BUY link. The product path and the player's Discord
+ * identity are encoded into a signed, expiring token — never as raw URL params.
+ * Clicking it hits /checkout/:token, which builds the FastSpring session.
+ */
+function buildBuyLink(productPath, discordUserId, discordUsername) {
+  const token = tokens.sign({ productPath, discordUserId, discordUsername }, 900);
+  return `${serverBase()}/checkout/${token}`;
+}
+
+/**
+ * The one-time "Connect account" link that starts Discord OAuth. `state` carries
+ * a signed discordUserId so the callback can trust who authorized.
+ */
+function buildConnectLink(discordUserId) {
+  const state = tokens.sign({ discordUserId, purpose: 'oauth' }, 900);
+  return `${serverBase()}/auth/discord?state=${encodeURIComponent(state)}`;
+}
+
+/** The public web shop base URL — for a "browse the whole store" button. */
 function browseUrl() {
   return process.env.WEBSHOP_URL || DEFAULT_WEBSHOP_URL;
 }
 
 /**
- * A product deep link WITHOUT a buyer identity — for public announcements shown
- * to the whole server (where there's no single player to tag). Pre-selects the
- * product; the buyer's identity is handled when they reach the web shop.
+ * A product deep link WITHOUT a buyer identity — for /announce (posted to the
+ * whole server). Pre-selects the product; the buyer identifies at the web shop.
  */
 function featureUrl(productPath) {
   const base = process.env.WEBSHOP_URL || DEFAULT_WEBSHOP_URL;
@@ -54,4 +60,4 @@ function featureUrl(productPath) {
   return `${base}${sep}prod=${encodeURIComponent(productPath)}`;
 }
 
-module.exports = { buildCheckoutUrl, browseUrl, featureUrl };
+module.exports = { buildBuyLink, buildConnectLink, browseUrl, featureUrl };
