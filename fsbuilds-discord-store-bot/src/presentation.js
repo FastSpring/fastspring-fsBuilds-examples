@@ -14,10 +14,10 @@
  */
 
 const STORE_BRANDING = {
-  name: 'Eggblast Arena',
+  name: 'Eggblast Arena Store',
   title: '🏪 In-Game Store',
   tagline:
-    'Stock up on gems and passes to dominate the arena. Pick an item below — your private checkout opens in seconds.',
+    'Stock up on gems and eggs to dominate!',
   color: 0x8a2be2, // Eggblast purple
   footer: 'Secure checkout powered by FastSpring',
   // Local asset files in /assets, attached to the message at runtime.

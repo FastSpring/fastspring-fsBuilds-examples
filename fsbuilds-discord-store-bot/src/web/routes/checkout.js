@@ -88,7 +88,8 @@ function embeddedCheckoutPage(storefront, sessionId) {
     src="https://sbl.onfastspring.com/sbl/1.0.9/fastspring-builder.min.js"
     type="text/javascript"
     data-storefront="${sf}"
-    data-error-callback="fscError">
+    data-error-callback="fscError"
+    data-popup-webhook-received="fscOrderComplete">
   </script>
   <style>
     :root{--bg:#ffffff;--ink:#1c1c28;--muted:#6b6b7b;--accent:#8a2be2}
@@ -99,11 +100,26 @@ function embeddedCheckoutPage(storefront, sessionId) {
     /* The embedded checkout renders left-aligned inside this centered wrapper. */
     #fsc-embedded-checkout-container{min-height:520px;text-align:left}
     #msg{color:var(--muted);font-size:.9rem;margin-top:12px}
+    /* Post-purchase next steps — hidden until the order completes. */
+    #next{display:none;flex-direction:column;gap:10px;max-width:360px;margin:0 auto 16px}
+    #next.show{display:flex}
+    /* Once paid, drop the loading min-height so the buttons hug the thank-you. */
+    #fsc-embedded-checkout-container.done{min-height:0}
+    .next-btn{display:block;padding:13px 16px;border-radius:8px;font-weight:700;font-size:1rem;
+      text-decoration:none;color:#fff;text-align:center}
+    .next-btn.discord{background:#5865f2}
+    .next-btn.game{background:var(--accent)}
   </style>
 </head>
 <body>
   <div class="wrap">
     <img class="logo" src="/assets/eggblast-logo.png" alt="Eggblast Arena" />
+    <!-- Illustrative only: these links don't go anywhere yet. In production,
+         point them at your Discord server invite and your game's deep link. -->
+    <div id="next">
+      <a class="next-btn discord" href="#" role="button">Return to Discord</a>
+      <a class="next-btn game" href="#" role="button">Open Eggblast Arena</a>
+    </div>
     <div id="fsc-embedded-checkout-container"></div>
     <p id="msg">Loading your checkout…</p>
   </div>
@@ -113,6 +129,13 @@ function embeddedCheckoutPage(storefront, sessionId) {
       console.error('[SBL error]', err);
       document.getElementById('msg').textContent =
         'We couldn\\'t load the checkout. This storefront may not allow this domain yet — see the console.';
+    };
+    // SBL calls this once FastSpring confirms the order. For EMBEDDED checkouts,
+    // data-popup-webhook-received is the reliable completion signal
+    // (data-popup-closed doesn't fire for an inline checkout).
+    window.fscOrderComplete = function () {
+      document.getElementById('fsc-embedded-checkout-container').classList.add('done');
+      document.getElementById('next').classList.add('show');
     };
     (function waitForSbl(tries) {
       if (window.fastspring && window.fastspring.builder) {

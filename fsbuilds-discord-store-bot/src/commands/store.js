@@ -119,10 +119,8 @@ async function execute(interaction) {
   const logo = new AttachmentBuilder(path.join(ASSETS_DIR, STORE_BRANDING.logoFile), { name: 'logo.png' });
 
   const headerText =
-    `# ${STORE_BRANDING.name} — Web Shop\n` +
-    `${STORE_BRANDING.tagline}\n\n` +
-    `Coin packs, battle passes, and exclusive egg power-ups — plus member deals ` +
-    `you won't find in the app.`;
+    `# ${STORE_BRANDING.name}\n` +
+    `${STORE_BRANDING.tagline}`;
 
   const container = new ContainerBuilder()
     .setAccentColor(STORE_BRANDING.color)
@@ -174,7 +172,7 @@ async function execute(interaction) {
     if (vipItems.length) {
       container.addTextDisplayComponents(
         new TextDisplayBuilder().setContent(
-          '## ⭐ VIP Exclusives\nMembers-only power-ups you won’t find anywhere else — thanks for being a VIP!'
+          '## ⭐ VIP Exclusives\nMember-exclusive power-ups!'
         )
       );
       vipItems.forEach((item) => appendProduct(container, item, ctx));
