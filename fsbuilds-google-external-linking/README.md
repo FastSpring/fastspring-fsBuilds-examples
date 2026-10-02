@@ -4,11 +4,10 @@ This repo shows how to report FastSpring transactions back to Google Play's **Ex
 
 This project lives inside FastSpring's [fastspring-fsBuilds-examples](https://github.com/FastSpring/fastspring-fsBuilds-examples) repo, alongside other FSBuilds projects.
 
-> **Note:** The reference vehicle is a POC Unity/UGS game, not an actively maintained SDK. This specific build does not cover raw Android/Kotlin. It reflects the FastSpring, Google Play, and Unity APIs as of its last update and may not account for later changes to any of the three. Check the linked documentation in [Related resources](#related-resources) for current behavior. See [Status and known issues](#status-and-known-issues) before assuming any single piece is production-ready as-is.
-
-**Scope note:** the purpose of this build is to compliantly **report** transactions to Google — it's a US program specifically. Two things deliberately out of scope, on purpose:
+> **Note:** The reference vehicle is a POC Unity/UGS game, not an actively maintained SDK. This specific build does not cover raw Android/Kotlin. It reflects the FastSpring, Google Play, and Unity APIs as of its last update and may not account for later changes to any of the three. Check the linked documentation in [Related resources](#related-resources) for current behavior. 
+**Scope note:** the purpose of this build is to compliantly **report** transactions to Google — it's a US program specifically. Two things deliberately out of scope:
 - **External Content Links also covers linking to external *app downloads*** — although part of the External Content Links program, it is a different flow with its own enrollment and reporting steps and is not covered here.
-- **Google's separate External Offers program is for the EEA**, this is a regional program and implemented differently than the US specific External Content Links program with its own APIs. The two are not interchangeable.
+- **Google's separate External Offers, Alternative Payments, or Payment Choice programs**, External Content Links is a regional program specific to the US with its own APIs. The programs are not interchangeable.
 
 ---
 
@@ -339,7 +338,7 @@ The backend also exposes a handful of gameplay-economy routes (`/spend`, `/earn`
 
 ## Environment variables
 
-Set these in Railway, or a local `.env` (the Google-reporting-relevant ones):
+Set these in your secure backend, or a local `.env` (the Google-reporting-relevant ones):
 
 | Variable | Purpose |
 |---|---|
