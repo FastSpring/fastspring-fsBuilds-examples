@@ -313,7 +313,7 @@ This table is what makes redelivery safe — check it first, and skip straight p
 - **Renewals/recurring charges don't carry a token at all** — send a fresh `externalTransactionId` per charge plus `initialExternalTransactionId` referencing the very first transaction in the series. Not applicable to a one-time digital-item purchase; this repo only ever sends `oneTimeTransaction`.
 - **Google rejects the call outright** for a user/region not eligible under the program — this isn't only a client-side gate, the backend enforces it too, so a report can fail even after the client-side eligibility check passed if something changed in between.
 - **Rate limits are per Google's standard API quotas** (the `ExternalTransactions` group is its own quota bucket) — not a concern at this integration's scale; check the [Google Play Developer API quotas page](https://developers.google.com/android-publisher/quotas) for current numbers if this ever needs to report in bulk.
-- **Refunds** go through a separate endpoint, `externaltransactions.refundexternaltransaction`, referenced by the original `externalTransactionId` — not covered above since this doc is scoped to reporting a completed purchase, not handling refunds.
+- **Refunds** go through a separate endpoint, `externaltransactions.refundexternaltransaction`, referenced by the original `externalTransactionId`
 
 Source: [Play Billing — integrating your backend outside GPB](https://developer.android.com/google/play/billing/outside-gpb-backend)
 
@@ -330,9 +330,7 @@ Source: [Play Billing — integrating your backend outside GPB](https://develope
 └── .github/workflows/          Manual "Generate Build" workflow for Unity targets
 ```
 
-Per-folder READMEs go deeper on setup: [Unity-UGS](Unity-UGS/README.md) · [Unity client](Unity-UGS/Unity/README.md) · [Backend](Unity-UGS/Backend/README.md) · [WebCode](Unity-UGS/Backend/WebCode/README.md).
-
-The backend also exposes a handful of gameplay-economy routes (`/spend`, `/earn`, `/earnEggs`, `/checkLevelUp`) and a separate native-purchase-validation route (`/validateGooglePurchase`) that aren't part of the Google reporting flow described above — see the per-folder READMEs if you need those.
+The backend also exposes a handful of gameplay-economy routes (`/spend`, `/earn`, `/earnEggs`, `/checkLevelUp`) and a separate native-purchase-validation route (`/validateGooglePurchase`) that aren't part of the Google reporting flow described above
 
 ---
 
@@ -385,7 +383,6 @@ Points specific to the Google reporting layer:
 - **Webhook signature verification.** `/webhook` verifies FastSpring's `X-FS-Signature` (HMAC-SHA256, constant-time comparison) against `FASTSPRING_WEBHOOK_SECRET` and fails closed if unconfigured — without this, anyone who could reach the endpoint could forge an `order.completed` body and mint currency for free. See FastSpring's [webhook security guidance](https://developer.fastspring.com/reference/webhooks-overview).
 - **Replay protection.** A redelivered webhook won't re-grant currency or re-report an already-reported order to Google — both keyed by FastSpring's own identifiers, using a claim/grant/fail state machine so a genuinely failed attempt can still be retried.
 
-**The private key, Android keystore, and upload key were committed in an earlier revision of this repo and remain in git history.** Treat them as compromised regardless of what's tracked today: generate a fresh FastSpring key pair and upload the new public cert, and request an upload-key reset in Play Console before using this as a starting point for anything real. History was deliberately left intact rather than rewritten.
 
 ---
 
